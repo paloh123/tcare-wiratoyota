@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Price {
+  id        Int      @id @default(autoincrement())
+  category  String
+  type      String
+  month_1   Int      @default(0)
+  month_6   Int      @default(0)
+  month_12  Int      @default(0)
+  month_18  Int      @default(0)
+  month_24  Int      @default(0)
+  month_30  Int      @default(0)
+  month_36  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, type])
+}
+
+model SalesUnit {
+  vin              String           @id
+  no_polisi        String           @default("")
+  customer         String           @default("")
+  type             String           @default("")
+  tanggal_delivery DateTime
+  outlet_sales     String           @default("")
+  salesman         String           @default("")
+  no_hp            String           @default("")
+  alamat_kota      String           @default("")
+  keterangan       String           @default("")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  serviceHistory   ServiceHistory[]
+}
+
+model ServiceHistory {
+  id              String    @id @default(uuid())
+  vin             String
+  tanggal_service DateTime
+  interval        String
+  dealer_service  String    @default("")
+  status_dealer   String
+  labour          Float     @default(0)
+  part            Float     @default(0)
+  revenue         Float     @default(0)
+  sa_outlet       String    @default("")
+  keterangan      String    @default("")
+  type            String    @default("")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  salesUnit       SalesUnit @relation(fields: [vin], references: [vin], onDelete: Cascade)
+
+  @@unique([vin, interval])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
