@@ -55,12 +55,19 @@ export async function POST(req: NextRequest) {
         errors.push("Skipped: VIN kosong")
         continue
       }
+
+      const tanggal_delivery = parseTanggal(record.tanggal_delivery)
+      if (isNaN(tanggal_delivery.getTime())) {
+        errors.push(`Skipped VIN ${vin}: Tanggal Delivery kosong atau format tidak valid`)
+        continue
+      }
+
       validRecords.push({
         vin,
         no_polisi: String(record.no_polisi ?? ""),
         customer: String(record.customer ?? ""),
         type: String(record.type ?? ""),
-        tanggal_delivery: parseTanggal(record.tanggal_delivery),
+        tanggal_delivery,
         outlet_sales: String(record.outlet_sales ?? ""),
         salesman: String(record.salesman ?? ""),
         no_hp: String(record.no_hp ?? ""),

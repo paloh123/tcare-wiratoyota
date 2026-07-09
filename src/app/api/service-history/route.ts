@@ -91,12 +91,18 @@ export async function POST(req: NextRequest) {
         continue
       }
 
+      const tanggal_service = parseTanggal(record.tanggal_service)
+      if (isNaN(tanggal_service.getTime())) {
+        errors.push(`Skipped VIN ${vin}: Tanggal Service kosong atau format tidak valid`)
+        continue
+      }
+
       const statusRaw = String(record.status_dealer ?? "WIRA").trim().toUpperCase().replace(" ", "_")
       const status_dealer = statusRaw === "DEALER_LAIN" ? "DEALER_LAIN" : "WIRA"
 
       validRecords.push({
         vin,
-        tanggal_service: parseTanggal(record.tanggal_service),
+        tanggal_service,
         interval,
         dealer_service: String(record.dealer_service ?? ""),
         status_dealer,
