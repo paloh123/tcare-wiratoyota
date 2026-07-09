@@ -47,7 +47,7 @@ export default function Sidebar() {
   const { data: session } = useSession()
 
   const items = [...navItems]
-  if (session?.user?.role === "ADMIN" || session?.user?.role === "SERVICE_MANAGER") {
+  if (session?.user?.role === "SERVICE_MANAGER") {
     items.push({
       href: "/users",
       label: "User Management",

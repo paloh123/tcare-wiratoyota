@@ -81,7 +81,7 @@ export default function UsersPage() {
   };
 
   // Restrict access
-  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SERVICE_MANAGER") {
+  if (session?.user?.role !== "SERVICE_MANAGER") {
     return (
       <div className="flex items-center justify-center h-full">
         <p className="text-zinc-400">You do not have permission to view this page.</p>
