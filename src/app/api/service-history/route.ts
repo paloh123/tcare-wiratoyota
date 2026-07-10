@@ -85,7 +85,19 @@ export async function POST(req: NextRequest) {
       }
 
       const intervalRaw = String(record.interval ?? "").trim()
-      const interval = INTERVAL_MAP[intervalRaw] ?? INTERVAL_MAP[intervalRaw.toUpperCase()]
+      let interval = INTERVAL_MAP[intervalRaw] ?? INTERVAL_MAP[intervalRaw.toUpperCase()]
+      
+      if (!interval) {
+        const cleanRaw = intervalRaw.toUpperCase()
+        if (cleanRaw.includes("KM 60000")) interval = "SEVENTH"
+        else if (cleanRaw.includes("KM 50000")) interval = "SIXTH"
+        else if (cleanRaw.includes("KM 40000")) interval = "FIFTH"
+        else if (cleanRaw.includes("KM 30000")) interval = "FOURTH"
+        else if (cleanRaw.includes("KM 20000")) interval = "THIRD"
+        else if (cleanRaw.includes("KM 10000")) interval = "SECOND"
+        else if (cleanRaw.includes("KM 1000")) interval = "FIRST"
+      }
+
       if (!interval) {
         errors.push(`Skipped: Interval tidak valid "${intervalRaw}" untuk VIN ${vin}`)
         continue
