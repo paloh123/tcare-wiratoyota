@@ -117,7 +117,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <h1 className="font-display text-2xl font-extrabold text-white sm:text-[28px] tracking-tight">
-                Revenue Recovery Radar <span className="text-white/30 font-medium ml-1">BJM</span>
+                Retention Recovery Radar <span className="text-white/30 font-medium ml-1">BJM</span>
               </h1>
             </div>
           </div>
