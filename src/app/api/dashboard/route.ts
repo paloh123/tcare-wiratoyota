@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { computeDashboardKPI } from "@/lib/r3-engine"
 
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   try {
     const kpi = await computeDashboardKPI()
