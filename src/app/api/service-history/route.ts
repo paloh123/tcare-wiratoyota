@@ -119,8 +119,31 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ created: 0, updated: 0, errors, total: records.length })
     }
 
+    // Ambil daftar VIN unik dari validRecords
+    const uniqueVins = Array.from(new Set(validRecords.map((r) => r.vin)))
+
+    // Cek VIN mana saja yang benar-benar ada di tabel SalesUnit
+    const existingSalesUnits = await prisma.salesUnit.findMany({
+      where: { vin: { in: uniqueVins } },
+      select: { vin: true }
+    })
+    const validSalesVins = new Set(existingSalesUnits.map((su) => su.vin))
+
+    // Filter record yang VIN-nya ada di SalesUnit
+    const filteredRecords = validRecords.filter((r) => validSalesVins.has(r.vin))
+    
+    // Simpan error untuk VIN yang di-skip karena tidak ada di SalesUnit (opsional, agar tidak terlalu banyak bisa dibatasi)
+    const skippedCount = validRecords.length - filteredRecords.length
+    if (skippedCount > 0) {
+      errors.push(`Skipped ${skippedCount} data karena VIN belum terdaftar di Sales Unit`)
+    }
+
+    if (filteredRecords.length === 0) {
+      return NextResponse.json({ created: 0, updated: 0, errors, total: records.length })
+    }
+
     // Kumpulkan semua composite key (vin + interval) yang perlu dicek
-    const vinIntervalPairs = validRecords.map((r) => ({ vin: r.vin, interval: r.interval }))
+    const vinIntervalPairs = filteredRecords.map((r) => ({ vin: r.vin, interval: r.interval }))
 
     // Cek existing dalam 1 query menggunakan OR conditions
     const existing = await prisma.serviceHistory.findMany({
@@ -132,8 +155,8 @@ export async function POST(req: NextRequest) {
 
     const existingSet = new Set(existing.map((e) => `${e.vin}::${e.interval}`))
 
-    const toCreate = validRecords.filter((r) => !existingSet.has(`${r.vin}::${r.interval}`))
-    const toUpdate = validRecords.filter((r) => existingSet.has(`${r.vin}::${r.interval}`))
+    const toCreate = filteredRecords.filter((r) => !existingSet.has(`${r.vin}::${r.interval}`))
+    const toUpdate = filteredRecords.filter((r) => existingSet.has(`${r.vin}::${r.interval}`))
 
     // Batch create semua data baru (1 query)
     if (toCreate.length > 0) {
