@@ -159,7 +159,25 @@ export async function computeTrackingData(): Promise<TrackingRow[]> {
     // Potensi revenue: missing intervals that haven't been serviced
     const now = new Date()
     let potensiRevenue = 0
-    const prices = allPrices.filter((p) => p.type === unit.type)
+
+    // Cari tipe kendaraan yang cocok di Pricing Matrix (Substring match, case-insensitive)
+    const matchingPrices = allPrices.filter((p) => 
+      unit.type.toUpperCase().includes(p.type.toUpperCase())
+    )
+    
+    // Jika ada banyak kecocokan (misal "INNOVA" dan "INNOVA ZENIX"), ambil yang namanya paling panjang/spesifik
+    let bestMatchPriceType: string | null = null
+    if (matchingPrices.length > 0) {
+      const bestMatch = matchingPrices.reduce((prev, current) => 
+        (current.type.length > prev.type.length) ? current : prev
+      )
+      bestMatchPriceType = bestMatch.type
+    }
+
+    // Ambil harga (Labour & Part) untuk tipe yang paling cocok
+    const prices = bestMatchPriceType 
+      ? matchingPrices.filter(p => p.type === bestMatchPriceType) 
+      : []
 
     intervals.forEach((i) => {
       if (i.actualDate === null && isBefore(now, i.predDate)) {
