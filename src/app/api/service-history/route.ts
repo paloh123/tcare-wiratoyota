@@ -86,18 +86,18 @@ export async function POST(req: NextRequest) {
 
       const intervalRaw = String(record.interval ?? "").trim()
       let interval = INTERVAL_MAP[intervalRaw] ?? INTERVAL_MAP[intervalRaw.toUpperCase()]
-      
+
       if (!interval) {
         // Hapus semua spasi ekstra, titik, dan koma agar lebih gampang dibaca
         const cleanRaw = intervalRaw.toUpperCase().replace(/[\.\,\s]/g, "")
-        
-        if (cleanRaw.includes("KM60000") || cleanRaw.includes("60RB") || cleanRaw.includes("KE7")) interval = "SEVENTH"
-        else if (cleanRaw.includes("KM50000") || cleanRaw.includes("50RB") || cleanRaw.includes("KE6")) interval = "SIXTH"
-        else if (cleanRaw.includes("KM40000") || cleanRaw.includes("40RB") || cleanRaw.includes("KE5")) interval = "FIFTH"
-        else if (cleanRaw.includes("KM30000") || cleanRaw.includes("30RB") || cleanRaw.includes("KE4")) interval = "FOURTH"
-        else if (cleanRaw.includes("KM20000") || cleanRaw.includes("20RB") || cleanRaw.includes("KE3")) interval = "THIRD"
-        else if (cleanRaw.includes("KM10000") || cleanRaw.includes("10RB") || cleanRaw.includes("KE2")) interval = "SECOND"
-        else if (cleanRaw.includes("KM1000") || cleanRaw.includes("1RB") || cleanRaw.includes("KE1")) interval = "FIRST"
+
+        if (cleanRaw.includes("60000") || cleanRaw.includes("60RB") || cleanRaw.includes("KE7")) interval = "SEVENTH"
+        else if (cleanRaw.includes("50000") || cleanRaw.includes("50RB") || cleanRaw.includes("KE6")) interval = "SIXTH"
+        else if (cleanRaw.includes("40000") || cleanRaw.includes("40RB") || cleanRaw.includes("KE5")) interval = "FIFTH"
+        else if (cleanRaw.includes("30000") || cleanRaw.includes("30RB") || cleanRaw.includes("KE4")) interval = "FOURTH"
+        else if (cleanRaw.includes("20000") || cleanRaw.includes("20RB") || cleanRaw.includes("KE3")) interval = "THIRD"
+        else if (cleanRaw.includes("10000") || cleanRaw.includes("10RB") || cleanRaw.includes("KE2")) interval = "SECOND"
+        else if (cleanRaw.includes("1000") || cleanRaw.includes("1RB") || cleanRaw.includes("KE1")) interval = "FIRST"
       }
 
       if (!interval) {
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
 
     // Filter record yang VIN-nya ada di SalesUnit
     const filteredRecords = validRecords.filter((r) => validSalesVins.has(r.vin))
-    
+
     // Simpan error untuk VIN yang di-skip karena tidak ada di SalesUnit (opsional, agar tidak terlalu banyak bisa dibatasi)
     const skippedCount = validRecords.length - filteredRecords.length
     if (skippedCount > 0) {
