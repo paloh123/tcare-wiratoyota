@@ -88,18 +88,20 @@ export async function POST(req: NextRequest) {
       let interval = INTERVAL_MAP[intervalRaw] ?? INTERVAL_MAP[intervalRaw.toUpperCase()]
       
       if (!interval) {
-        const cleanRaw = intervalRaw.toUpperCase()
-        if (cleanRaw.includes("KM 60000")) interval = "SEVENTH"
-        else if (cleanRaw.includes("KM 50000")) interval = "SIXTH"
-        else if (cleanRaw.includes("KM 40000")) interval = "FIFTH"
-        else if (cleanRaw.includes("KM 30000")) interval = "FOURTH"
-        else if (cleanRaw.includes("KM 20000")) interval = "THIRD"
-        else if (cleanRaw.includes("KM 10000")) interval = "SECOND"
-        else if (cleanRaw.includes("KM 1000")) interval = "FIRST"
+        // Hapus semua spasi ekstra, titik, dan koma agar lebih gampang dibaca
+        const cleanRaw = intervalRaw.toUpperCase().replace(/[\.\,\s]/g, "")
+        
+        if (cleanRaw.includes("KM60000") || cleanRaw.includes("60RB") || cleanRaw.includes("KE7")) interval = "SEVENTH"
+        else if (cleanRaw.includes("KM50000") || cleanRaw.includes("50RB") || cleanRaw.includes("KE6")) interval = "SIXTH"
+        else if (cleanRaw.includes("KM40000") || cleanRaw.includes("40RB") || cleanRaw.includes("KE5")) interval = "FIFTH"
+        else if (cleanRaw.includes("KM30000") || cleanRaw.includes("30RB") || cleanRaw.includes("KE4")) interval = "FOURTH"
+        else if (cleanRaw.includes("KM20000") || cleanRaw.includes("20RB") || cleanRaw.includes("KE3")) interval = "THIRD"
+        else if (cleanRaw.includes("KM10000") || cleanRaw.includes("10RB") || cleanRaw.includes("KE2")) interval = "SECOND"
+        else if (cleanRaw.includes("KM1000") || cleanRaw.includes("1RB") || cleanRaw.includes("KE1")) interval = "FIRST"
       }
 
       if (!interval) {
-        errors.push(`Skipped: Interval tidak valid "${intervalRaw}" untuk VIN ${vin}`)
+        errors.push(`Skipped: Interval tidak dikenali "${intervalRaw}" untuk VIN ${vin}`)
         continue
       }
 
