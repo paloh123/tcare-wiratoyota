@@ -147,18 +147,11 @@ export async function computeTrackingData(): Promise<TrackingRow[]> {
       }
     })
 
-    // Revenue calculations
-    const incomeWira = intervals
-      .filter((i) => i.statusDealer === "WIRA")
-      .reduce((sum, i) => sum + i.revenue, 0)
-
-    const lostDealerLain = intervals
-      .filter((i) => i.statusDealer === "DEALER_LAIN")
-      .reduce((sum, i) => sum + i.revenue, 0)
-
-    // Potensi revenue: missing intervals that haven't been serviced
-    const now = new Date()
+    // Setup perhitungan revenue
+    let incomeWira = 0
+    let lostDealerLain = 0
     let potensiRevenue = 0
+    const now = new Date()
 
     // Cari tipe kendaraan yang cocok di Pricing Matrix (Substring match, case-insensitive)
     const matchingPrices = allPrices.filter((p) => 
@@ -180,16 +173,32 @@ export async function computeTrackingData(): Promise<TrackingRow[]> {
       : []
 
     intervals.forEach((i) => {
-      if (i.actualDate === null && isBefore(now, i.predDate)) {
-        const monthField = MONTH_FIELD_MAP[i.interval] as keyof typeof prices[0]
-        const labourPrice = prices.find((p) => p.category === "LABOUR")
-        const partPrice = prices.find((p) => p.category === "PART")
+      // 1. Dapatkan harga estimasi dari Pricing Matrix
+      let matrixRevenue = 0
+      const monthField = MONTH_FIELD_MAP[i.interval] as keyof typeof prices[0]
+      const labourPrice = prices.find((p) => p.category === "LABOUR")
+      const partPrice = prices.find((p) => p.category === "PART")
 
-        if (labourPrice && monthField) {
-          potensiRevenue += (labourPrice[monthField] as number) ?? 0
-        }
-        if (partPrice && monthField) {
-          potensiRevenue += (partPrice[monthField] as number) ?? 0
+      if (labourPrice && monthField) {
+        matrixRevenue += (labourPrice[monthField] as number) ?? 0
+      }
+      if (partPrice && monthField) {
+        matrixRevenue += (partPrice[monthField] as number) ?? 0
+      }
+
+      // 2. Tentukan Revenue akhir: Prioritaskan data asli Excel jika ada, kalau 0 pakai Pricing Matrix
+      const finalRevenue = i.revenue > 0 ? i.revenue : matrixRevenue
+
+      // 3. Distribusikan ke Income / Lost / Potensi
+      if (i.actualDate === null && isBefore(now, i.predDate)) {
+        // Belum servis & sudah lewat target -> Masuk ke Potensi
+        potensiRevenue += matrixRevenue
+      } else if (i.actualDate !== null) {
+        // Sudah ada riwayat servis
+        if (i.statusDealer === "WIRA") {
+          incomeWira += finalRevenue
+        } else if (i.statusDealer === "DEALER_LAIN") {
+          lostDealerLain += finalRevenue
         }
       }
     })
