@@ -64,6 +64,8 @@ export interface DashboardKPI {
   top10Cities: { name: string; count: number }[]
   top10Competitors: { name: string; count: number }[]
   topSalesman: { name: string; count: number; revenue: number }[]
+  top10Branches: { name: string; count: number }[]
+  retentionByInterval: { interval: string; retentionRate: number }[]
 }
 
 function getPredDate(deliveryDate: Date, interval: string): Date {
@@ -265,8 +267,11 @@ export async function computeDashboardKPI(): Promise<DashboardKPI> {
   // Aggregations
   const modelCounts: Record<string, number> = {}
   const cityCounts: Record<string, number> = {}
+  const branchCounts: Record<string, number> = {}
   const competitorCounts: Record<string, number> = {}
   const salesmanData: Record<string, { count: number; revenue: number }> = {}
+  const intervalStats: Record<string, { wira: number; total: number }> = {}
+  const now = new Date()
 
   rows.forEach(r => {
     // Model (Type)
@@ -277,6 +282,16 @@ export async function computeDashboardKPI(): Promise<DashboardKPI> {
     if (r.alamatKota) {
       cityCounts[r.alamatKota] = (cityCounts[r.alamatKota] || 0) + 1
     }
+    // Branch (cabang last service)
+    const validIntervals = r.intervals.filter(i => i.actualDate !== null)
+    if (validIntervals.length > 0) {
+      const lastService = validIntervals.reduce((latest, current) => {
+        return (current.actualDate!.getTime() > latest.actualDate!.getTime()) ? current : latest
+      })
+      if (lastService.dealerService) {
+        branchCounts[lastService.dealerService] = (branchCounts[lastService.dealerService] || 0) + 1
+      }
+    }
     // Salesman (only count if they have wira income, to make it interesting)
     if (r.salesman && r.incomeWira > 0) {
       if (!salesmanData[r.salesman]) salesmanData[r.salesman] = { count: 0, revenue: 0 }
@@ -284,10 +299,22 @@ export async function computeDashboardKPI(): Promise<DashboardKPI> {
       salesmanData[r.salesman].revenue += r.incomeWira
     }
     
-    // Competitors from intervals
+    // Competitors and interval stats
     r.intervals.forEach(i => {
       if (i.statusDealer === "DEALER_LAIN" && i.dealerService) {
         competitorCounts[i.dealerService] = (competitorCounts[i.dealerService] || 0) + 1
+      }
+      
+      // Interval stats for retention
+      if (!intervalStats[i.interval]) {
+        intervalStats[i.interval] = { wira: 0, total: 0 }
+      }
+      const isPastDue = isAfter(now, i.predDate)
+      if (i.actualDate !== null || isPastDue) {
+        intervalStats[i.interval].total += 1
+        if (i.statusDealer === "WIRA") {
+          intervalStats[i.interval].wira += 1
+        }
       }
     })
   })
@@ -306,6 +333,16 @@ export async function computeDashboardKPI(): Promise<DashboardKPI> {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 10)
+
+  const top10Branches = Object.entries(branchCounts)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+
+  const retentionByInterval = Object.entries(intervalStats).map(([interval, stats]) => ({
+    interval,
+    retentionRate: stats.total > 0 ? (stats.wira / stats.total) * 100 : 0
+  }))
 
   const topSalesman = Object.entries(salesmanData)
     .map(([name, data]) => ({ name, count: data.count, revenue: data.revenue }))
@@ -335,6 +372,8 @@ export async function computeDashboardKPI(): Promise<DashboardKPI> {
     top10Models,
     top10Cities,
     top10Competitors,
-    topSalesman
+    topSalesman,
+    top10Branches,
+    retentionByInterval
   }
 }

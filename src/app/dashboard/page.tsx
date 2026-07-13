@@ -32,6 +32,7 @@ export default function DashboardPage() {
   const [kpi, setKpi] = useState<DashboardKPI | null>(null)
   const [loading, setLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
+  const [now, setNow] = useState(new Date())
 
   const fetchKPI = async (sync = false) => {
     if (sync) setIsSyncing(true)
@@ -53,6 +54,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchKPI()
+    const timer = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(timer)
   }, [])
 
   if (loading || !kpi) {
@@ -122,6 +125,10 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <div className="hidden md:flex flex-col items-end mr-4">
+              <div className="text-sm font-bold text-white tracking-widest">{now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+              <div className="text-xs font-mono text-cyan-400">{now.toLocaleTimeString('id-ID')}</div>
+            </div>
              <button 
                 onClick={() => fetchKPI(true)} 
                 disabled={isSyncing}
@@ -393,7 +400,7 @@ export default function DashboardPage() {
              </div>
           </motion.div>
 
-          {/* TOP 10 KOTA */}
+          {/* TOP 10 CABANG */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -402,28 +409,28 @@ export default function DashboardPage() {
              <div className="absolute top-0 right-0 p-40 bg-gradient-to-bl from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl pointer-events-none" />
              <div className="mb-6 flex items-center gap-4 border-b border-white/[0.05] pb-5 relative z-10">
                 <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-transparent p-2.5 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
-                  <MapPin className="h-6 w-6 text-emerald-400" />
+                  <Building2 className="h-6 w-6 text-emerald-400" />
                 </div>
                 <div>
-                  <h2 className="font-display text-xl font-bold text-white tracking-wide">Top Demographics</h2>
-                  <p className="text-[11px] uppercase tracking-widest text-slate-500 font-bold mt-1">Customer City Origin</p>
+                  <h2 className="font-display text-xl font-bold text-white tracking-wide">Top Cabang</h2>
+                  <p className="text-[11px] uppercase tracking-widest text-slate-500 font-bold mt-1">Berdasarkan Last Service</p>
                 </div>
              </div>
              <div className="overflow-x-auto relative z-10 -mx-6 px-6 sm:mx-0 sm:px-0">
                <table className="premium-table">
                  <thead>
                    <tr>
-                     <th>City / Regency</th>
-                     <th className="text-right">Total Customers</th>
-                     <th className="pl-6 w-1/3">Density</th>
+                     <th>Nama Cabang</th>
+                     <th className="text-right">Total Unit</th>
+                     <th className="pl-6 w-1/3">Proporsi</th>
                    </tr>
                  </thead>
                  <tbody>
-                    {kpi.top10Cities.length === 0 ? (
+                    {kpi.top10Branches.length === 0 ? (
                       <tr><td colSpan={3} className="py-8 text-center text-xs font-medium text-slate-500 uppercase tracking-widest">Awaiting telemetrics</td></tr>
                     ) : (
-                      kpi.top10Cities.map(c => (
-                        <ListRowWithBar key={c.name} label={c.name} value={c.count} max={kpi.top10Cities[0].count} color="bg-emerald-400" shadowColor="rgba(52,211,153,0.5)" />
+                      kpi.top10Branches.map(c => (
+                        <ListRowWithBar key={c.name} label={c.name} value={c.count} max={kpi.top10Branches[0].count} color="bg-emerald-400" shadowColor="rgba(52,211,153,0.5)" />
                       ))
                     )}
                  </tbody>
@@ -462,6 +469,44 @@ export default function DashboardPage() {
                     ) : (
                       kpi.top10Competitors.map(c => (
                         <ListRowWithBar key={c.name} label={c.name} value={c.count} max={kpi.top10Competitors[0].count} color="bg-red-400" shadowColor="rgba(248,113,113,0.5)" valueColor="text-red-400" />
+                      ))
+                    )}
+                 </tbody>
+               </table>
+             </div>
+          </motion.div>
+
+          {/* RETENTION BY INTERVAL */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="enterprise-card p-6 sm:p-8 group xl:col-span-2"
+          >
+             <div className="absolute top-0 right-0 p-40 bg-gradient-to-bl from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 blur-3xl pointer-events-none" />
+             <div className="mb-6 flex items-center gap-4 border-b border-white/[0.05] pb-5 relative z-10">
+                <div className="rounded-xl bg-gradient-to-br from-blue-500/20 to-transparent p-2.5 border border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                  <BarChart4 className="h-6 w-6 text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="font-display text-xl font-bold text-white tracking-wide">Retention by Service Interval</h2>
+                  <p className="text-[11px] uppercase tracking-widest text-slate-500 font-bold mt-1">Tingkat Retensi Berdasarkan Servis Berkala</p>
+                </div>
+             </div>
+             <div className="overflow-x-auto relative z-10 -mx-6 px-6 sm:mx-0 sm:px-0">
+               <table className="premium-table">
+                 <thead>
+                   <tr>
+                     <th>Interval Servis</th>
+                     <th className="text-right">Retention Rate</th>
+                     <th className="pl-6 w-1/2">Grafik Retensi</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                    {kpi.retentionByInterval.length === 0 ? (
+                      <tr><td colSpan={3} className="py-8 text-center text-xs font-medium text-slate-500 uppercase tracking-widest">Awaiting telemetrics</td></tr>
+                    ) : (
+                      kpi.retentionByInterval.map(c => (
+                        <ListRowWithPercent key={c.interval} label={c.interval} percent={c.retentionRate} color="bg-blue-400" shadowColor="rgba(59,130,246,0.5)" />
                       ))
                     )}
                  </tbody>
@@ -620,6 +665,32 @@ function ListRowWithBar({ label, value, max, color, shadowColor, valueColor }: {
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${percent}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className={`h-full ${color} rounded-full`} 
+              style={{ boxShadow: `0 0 8px ${shadowColor}` }}
+            />
+          </div>
+        </div>
+      </td>
+    </tr>
+  )
+}
+function ListRowWithPercent({ label, percent, color, shadowColor }: { label: string, percent: number, color: string, shadowColor: string }) {
+  const p = Math.max(0, percent)
+  return (
+    <tr>
+      <td>
+        <span className="text-[12px] font-bold uppercase tracking-wider text-white/80">{label}</span>
+      </td>
+      <td className="text-right">
+        <span className={`font-mono text-[14px] font-bold text-white`}>{p.toFixed(1)}%</span>
+      </td>
+      <td className="pl-6 w-1/2">
+        <div className="flex items-center h-full">
+          <div className="h-2 w-full bg-white/[0.05] rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${p}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
               className={`h-full ${color} rounded-full`} 
               style={{ boxShadow: `0 0 8px ${shadowColor}` }}
