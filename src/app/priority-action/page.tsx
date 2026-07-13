@@ -11,6 +11,9 @@ import {
   RefreshCw,
   Search,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   PhoneCall,
   Calendar,
   MessageSquare
@@ -71,6 +74,8 @@ export default function PriorityActionPage() {
   const [loading, setLoading] = useState(true)
   const [activePriority, setActivePriority] = useState<Priority>("P1_RECOVERY")
   const [search, setSearch] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   const fetchData = async () => {
     setLoading(true)
@@ -115,6 +120,35 @@ export default function PriorityActionPage() {
       return true
     })
   }, [data, activePriority, search])
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activePriority, search])
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
+  const paginatedData = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    return filteredData.slice(startIndex, startIndex + itemsPerPage)
+  }, [filteredData, currentPage, itemsPerPage])
+
+  const getPageNumbers = () => {
+    const delta = 2
+    const range: (number | "...")[] = []
+    const left = Math.max(1, currentPage - delta)
+    const right = Math.min(totalPages, currentPage + delta)
+
+    if (left > 1) {
+      range.push(1)
+      if (left > 2) range.push("...")
+    }
+    for (let i = left; i <= right; i++) range.push(i)
+    if (right < totalPages) {
+      if (right < totalPages - 1) range.push("...")
+      range.push(totalPages)
+    }
+    return range
+  }
 
   const activeConfig = PRIORITY_CONFIG[activePriority]
 
@@ -241,10 +275,11 @@ export default function PriorityActionPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <AnimatePresence>
-              {filteredData.map((row, idx) => {
-                const ActionIcon = activeConfig.actionIcon
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <AnimatePresence mode="popLayout">
+                {paginatedData.map((row, idx) => {
+                  const ActionIcon = activeConfig.actionIcon
                 return (
                   <motion.div
                     key={row.vin}
@@ -314,7 +349,76 @@ export default function PriorityActionPage() {
                   </motion.div>
                 )
               })}
-            </AnimatePresence>
+              </AnimatePresence>
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between flex-wrap gap-4 pt-6 border-t border-white/[0.05]">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl border border-white/10 text-slate-500 hover:text-white hover:border-white/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronsLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-xl border border-white/10 text-slate-500 hover:text-white hover:border-white/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  {getPageNumbers().map((pg, i) =>
+                    pg === "..." ? (
+                      <span key={`ellipsis-${i}`} className="w-8 text-center text-slate-500 text-xs font-bold">…</span>
+                    ) : (
+                      <button
+                        key={pg}
+                        onClick={() => setCurrentPage(pg as number)}
+                        className="w-8 h-8 rounded-xl text-xs font-bold tracking-wide transition-all"
+                        style={
+                          pg === currentPage
+                            ? {
+                                background: `${activeConfig.color}20`,
+                                border: `1px solid ${activeConfig.color}50`,
+                                color: activeConfig.color,
+                                boxShadow: `0 0 15px ${activeConfig.glow}`,
+                              }
+                            : {
+                                background: "transparent",
+                                border: "1px solid rgba(255,255,255,0.08)",
+                                color: "#94a3b8",
+                              }
+                        }
+                      >
+                        {pg}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-xl border border-white/10 text-slate-500 hover:text-white hover:border-white/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-xl border border-white/10 text-slate-500 hover:text-white hover:border-white/25 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronsRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
