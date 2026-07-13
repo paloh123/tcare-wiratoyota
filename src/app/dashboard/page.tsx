@@ -26,6 +26,8 @@ import {
   Banknote
 } from "lucide-react"
 import { formatCurrency, formatNumber } from "@/lib/utils"
+import { INTERVAL_ORDER } from "@/lib/utils"
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import type { DashboardKPI } from "@/lib/r3-engine"
 
 export default function DashboardPage() {
@@ -492,25 +494,66 @@ export default function DashboardPage() {
                   <p className="text-[11px] uppercase tracking-widest text-slate-500 font-bold mt-1">Tingkat Retensi Berdasarkan Servis Berkala</p>
                 </div>
              </div>
-             <div className="overflow-x-auto relative z-10 -mx-6 px-6 sm:mx-0 sm:px-0">
-               <table className="premium-table">
-                 <thead>
-                   <tr>
-                     <th>Interval Servis</th>
-                     <th className="text-right">Retention Rate</th>
-                     <th className="pl-6 w-1/2">Grafik Retensi</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                    {kpi.retentionByInterval.length === 0 ? (
-                      <tr><td colSpan={3} className="py-8 text-center text-xs font-medium text-slate-500 uppercase tracking-widest">Awaiting telemetrics</td></tr>
-                    ) : (
-                      kpi.retentionByInterval.map(c => (
-                        <ListRowWithPercent key={c.interval} label={c.interval} percent={c.retentionRate} color="bg-blue-400" shadowColor="rgba(59,130,246,0.5)" />
-                      ))
-                    )}
-                 </tbody>
-               </table>
+             
+             <div className="relative z-10 h-[300px] w-full mt-4">
+               {kpi.retentionByInterval.length === 0 ? (
+                 <div className="flex h-full items-center justify-center text-xs font-medium text-slate-500 uppercase tracking-widest">
+                   Awaiting telemetrics
+                 </div>
+               ) : (
+                 <ResponsiveContainer width="100%" height="100%">
+                   <AreaChart
+                     data={[...kpi.retentionByInterval].sort((a, b) => {
+                       const idxA = INTERVAL_ORDER.indexOf(a.interval)
+                       const idxB = INTERVAL_ORDER.indexOf(b.interval)
+                       return (idxA !== -1 ? idxA : 99) - (idxB !== -1 ? idxB : 99)
+                     })}
+                     margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                   >
+                     <defs>
+                       <linearGradient id="colorRetention" x1="0" y1="0" x2="0" y2="1">
+                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4}/>
+                         <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                       </linearGradient>
+                     </defs>
+                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                     <XAxis 
+                       dataKey="interval" 
+                       stroke="rgba(255,255,255,0.2)" 
+                       tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 'bold' }} 
+                       tickLine={false}
+                       axisLine={false}
+                     />
+                     <YAxis 
+                       stroke="rgba(255,255,255,0.2)" 
+                       tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 'bold', fontFamily: 'monospace' }} 
+                       tickFormatter={(value) => `${value}%`}
+                       tickLine={false}
+                       axisLine={false}
+                     />
+                     <Tooltip 
+                       contentStyle={{ 
+                         backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                         border: '1px solid rgba(255,255,255,0.1)',
+                         borderRadius: '12px',
+                         boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+                       }}
+                       itemStyle={{ color: '#60a5fa', fontWeight: 'bold', fontFamily: 'monospace' }}
+                       labelStyle={{ color: 'rgba(255,255,255,0.7)', fontWeight: 'bold', marginBottom: '4px' }}
+                       formatter={(value: number) => [`${value.toFixed(1)}%`, 'Retention Rate']}
+                     />
+                     <Area 
+                       type="monotone" 
+                       dataKey="retentionRate" 
+                       stroke="#3b82f6" 
+                       strokeWidth={3}
+                       fillOpacity={1} 
+                       fill="url(#colorRetention)" 
+                       activeDot={{ r: 6, fill: '#60a5fa', stroke: '#1e3a8a', strokeWidth: 2 }}
+                     />
+                   </AreaChart>
+                 </ResponsiveContainer>
+               )}
              </div>
           </motion.div>
         </section>
