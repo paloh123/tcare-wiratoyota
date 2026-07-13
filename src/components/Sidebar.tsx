@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Users,
   LogOut,
+  Target
 } from "lucide-react"
 import { signOut, useSession } from "next-auth/react"
 
@@ -27,6 +28,12 @@ const navItems = [
     label: "Tracking R3",
     icon: Table2,
     description: "Master Data Radar",
+  },
+  {
+    href: "/priority-action",
+    label: "Priority Action",
+    icon: Target,
+    description: "Follow-up Action Plan",
   },
   {
     href: "/data-import",
