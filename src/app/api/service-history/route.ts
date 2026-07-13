@@ -138,25 +138,35 @@ export async function POST(req: NextRequest) {
     // Ambil daftar VIN unik dari validRecords
     const uniqueVins = Array.from(new Set(validRecords.map((r) => r.vin)))
 
-    // Cek VIN mana saja yang benar-benar ada di tabel SalesUnit
+    // Cek VIN mana saja yang sudah ada di tabel SalesUnit
     const existingSalesUnits = await prisma.salesUnit.findMany({
       where: { vin: { in: uniqueVins } },
       select: { vin: true }
     })
-    const validSalesVins = new Set(existingSalesUnits.map((su) => su.vin))
+    const existingSalesVins = new Set(existingSalesUnits.map((su) => su.vin))
 
-    // Filter record yang VIN-nya ada di SalesUnit
-    const filteredRecords = validRecords.filter((r) => validSalesVins.has(r.vin))
-
-    // Simpan error untuk VIN yang di-skip karena tidak ada di SalesUnit (opsional, agar tidak terlalu banyak bisa dibatasi)
-    const skippedCount = validRecords.length - filteredRecords.length
-    if (skippedCount > 0) {
-      errors.push(`Skipped ${skippedCount} data karena VIN belum terdaftar di Sales Unit`)
+    // VIN yang belum ada di SalesUnit → buat placeholder otomatis agar relasi FK tidak error
+    const newVins = uniqueVins.filter((v) => !existingSalesVins.has(v))
+    if (newVins.length > 0) {
+      await prisma.salesUnit.createMany({
+        data: newVins.map((v) => ({
+          vin: v,
+          no_polisi: "",
+          customer: "",
+          type: "",
+          tanggal_delivery: new Date(),
+          outlet_sales: "",
+          salesman: "",
+          no_hp: "",
+          alamat_kota: "",
+          keterangan: "",
+        })),
+        skipDuplicates: true,
+      })
     }
 
-    if (filteredRecords.length === 0) {
-      return NextResponse.json({ created: 0, updated: 0, errors, total: records.length })
-    }
+    // Semua record valid sekarang bisa diproses (VIN sudah dijamin ada di SalesUnit)
+    const filteredRecords = validRecords
 
     // Kumpulkan semua composite key (vin + interval) yang perlu dicek
     const vinIntervalPairs = filteredRecords.map((r) => ({ vin: r.vin, interval: r.interval }))
