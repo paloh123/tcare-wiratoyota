@@ -171,40 +171,41 @@ export default function TrackingR3Page() {
       ),
       size: 110,
     },
-    // Pred dates
-    ...INTERVAL_ORDER.map((interval, idx) => ({
-      id: `pred_${interval}`,
-      header: `Pred ${idx + 1}`,
-      cell: ({ row }: { row: { original: SerializableTrackingRow } }) => {
-        const iData = row.original.intervals[idx]
-        if (!iData) return <span className="text-slate-600">—</span>
-        return (
-          <span className="text-xs font-medium text-slate-400">
-            {formatDate(iData.predDate)}
-          </span>
-        )
+    // Pred and Actual dates paired
+    ...INTERVAL_ORDER.flatMap((interval, idx) => [
+      {
+        id: `pred_${interval}`,
+        header: `Pred ${idx + 1}`,
+        cell: ({ row }: { row: { original: SerializableTrackingRow } }) => {
+          const iData = row.original.intervals[idx]
+          if (!iData) return <span className="text-slate-600">—</span>
+          return (
+            <span className="text-xs font-medium text-slate-400">
+              {formatDate(iData.predDate)}
+            </span>
+          )
+        },
+        size: 100,
       },
-      size: 100,
-    })),
-    // Actual dates
-    ...INTERVAL_ORDER.map((interval, idx) => ({
-      id: `actual_${interval}`,
-      header: `Actual ${idx + 1}`,
-      cell: ({ row }: { row: { original: SerializableTrackingRow } }) => {
-        const iData = row.original.intervals[idx]
-        if (!iData || !iData.actualDate) return <span className="text-slate-600">—</span>
-        return (
-          <div className="space-y-1.5">
-            <div className="text-xs font-bold text-white tracking-wide">{formatDate(iData.actualDate)}</div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status={iData.statusDealer} />
-              <GapBadge gap={iData.gapHari} />
+      {
+        id: `actual_${interval}`,
+        header: `Actual ${idx + 1}`,
+        cell: ({ row }: { row: { original: SerializableTrackingRow } }) => {
+          const iData = row.original.intervals[idx]
+          if (!iData || !iData.actualDate) return <span className="text-slate-600">—</span>
+          return (
+            <div className="space-y-1.5">
+              <div className="text-xs font-bold text-white tracking-wide">{formatDate(iData.actualDate)}</div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status={iData.statusDealer} />
+                <GapBadge gap={iData.gapHari} />
+              </div>
             </div>
-          </div>
-        )
-      },
-      size: 130,
-    })),
+          )
+        },
+        size: 130,
+      }
+    ]),
     {
       accessorKey: "nextDueDate",
       header: "Next Due",
