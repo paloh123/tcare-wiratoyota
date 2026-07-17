@@ -304,15 +304,23 @@ export default function TrackingR3Page() {
   })
 
   const exportCSV = () => {
-    const headers = ["VIN", "No Polisi", "Customer", "Tipe", "Delivery", "Priority", "Next Due", "Income Wira", "Lost", "Potensi Rev"]
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val);
+      return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    const headers = ["VIN", "No Polisi", "Customer", "No. HP", "Tipe", "Delivery", "Priority", "Next Due", "Income Wira", "Lost", "Potensi Rev"]
     const rows = filteredData.map((r) => [
-      r.vin, r.noPolisi, r.customer, r.type,
+      r.vin, r.noPolisi, r.customer, r.noHp || "", r.type,
       formatDate(r.tanggalDelivery),
       PRIORITY_LABELS[r.priority],
       r.nextDueDate ? formatDate(r.nextDueDate) : "—",
       r.incomeWira, r.lostDealerLain, r.potensiRevenue,
     ])
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n")
+    const csv = [headers, ...rows]
+      .map((row) => row.map(escapeCsv).join(","))
+      .join("\n")
     const blob = new Blob([csv], { type: "text/csv" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
