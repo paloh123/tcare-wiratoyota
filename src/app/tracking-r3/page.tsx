@@ -310,13 +310,14 @@ export default function TrackingR3Page() {
       return `"${str.replace(/"/g, '""')}"`;
     };
 
-    const headers = ["VIN", "No Polisi", "Customer", "No. HP", "Tipe", "Delivery", "Priority", "Next Due", "Income Wira", "Lost", "Potensi Rev"]
+    const headers = ["VIN", "No Polisi", "Customer", "Tipe", "Delivery", "Priority", "Next Due", "Income Wira", "Lost", "Potensi Rev", "No. HP"]
     const rows = filteredData.map((r) => [
-      r.vin, r.noPolisi, r.customer, r.noHp || "", r.type,
+      r.vin, r.noPolisi, r.customer, r.type,
       formatDate(r.tanggalDelivery),
       PRIORITY_LABELS[r.priority],
       r.nextDueDate ? formatDate(r.nextDueDate) : "—",
       r.incomeWira, r.lostDealerLain, r.potensiRevenue,
+      r.noHp || ""
     ])
     const csv = [headers, ...rows]
       .map((row) => row.map(escapeCsv).join(","))
